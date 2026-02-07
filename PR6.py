@@ -3,8 +3,8 @@ import pygame
 WIDTH, HEIGHT = 800, 600
 FPS = 60
 
-BG_COLOR = (30, 30, 40)
-PLAYER_COLOR = (80, 200, 120)
+BG_COLOR = (0, 0, 0)
+PLAYER_COLOR = (200, 0, 0)
 
 PLAYER_SIZE = 50
 PLAYER_SPEED = 250 
@@ -26,14 +26,14 @@ def main():
                 running = False
 
         keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_LEFT]:
+# керування персонажем - wasd
+        if keys[pygame.K_a]:
             player.x -= int(PLAYER_SPEED * dt)
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_d]:
             player.x += int(PLAYER_SPEED * dt)
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_w]:
             player.y -= int(PLAYER_SPEED * dt)
-        if keys[pygame.K_DOWN]:
+        if keys[pygame.K_s]:
             player.y += int(PLAYER_SPEED * dt)
 
         player.x = max(0, min(WIDTH - player.width, player.x))
