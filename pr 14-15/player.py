@@ -212,8 +212,4 @@ class Player(pygame.sprite.Sprite):
 
                 if xvel < 0:
                     self.rect.left = p.rect.right
-<<<<<<< HEAD
                     self.xvel = 0
-=======
-                    self.xvel = 0
->>>>>>> f6a6458 (new)
