@@ -43,8 +43,20 @@ def main():
         offset_x = player.world_x - WIDTH // 2
         offset_y = player.world_y - HEIGHT // 2
 
-        offset_x = max(0, min(WORLD_WIDTH - WIDTH, offset_x))
-        offset_y = max(0, min(WORLD_HEIGHT - HEIGHT, offset_y))
+        # offset_x = max(0, min(WORLD_WIDTH - WIDTH, offset_x))
+        # offset_y = max(0, min(WORLD_HEIGHT - HEIGHT, offset_y)) було
+
+        # Обмеження по X
+        if offset_x < 0:
+            offset_x = 0
+        elif offset_x > WORLD_WIDTH - WIDTH:
+            offset_x = WORLD_WIDTH - WIDTH
+
+        # Обмеження по Y
+        if offset_y < 0:
+            offset_y = 0
+        elif offset_y > WORLD_HEIGHT - HEIGHT:
+            offset_y = WORLD_HEIGHT - HEIGHT
 
         screen.fill(BG_COLOR)
 
@@ -54,7 +66,9 @@ def main():
                 (tree_x - offset_x, tree_y - offset_y)
             )
 
-        player.draw(screen, WIDTH, HEIGHT)
+        # player.draw(screen, WIDTH, HEIGHT) було
+
+        player.draw(screen, offset_x, offset_y)
 
         pygame.display.flip()
 

@@ -54,8 +54,8 @@ class Player:
             self.world_y += PLAYER_SPEED * dt
             self.is_moving = True
 
-        self.world_x = max(0, min(world_w - PLAYER_SIZE, self.world_x))
-        self.world_y = max(0, min(world_h - PLAYER_SIZE, self.world_y))
+        # self.world_x = max(0, min(world_w - PLAYER_SIZE, self.world_x))
+        # self.world_y = max(0, min(world_h - PLAYER_SIZE, self.world_y))
 
         if self.is_moving:
             self.current_frame += 0.2
@@ -66,7 +66,7 @@ class Player:
             if self.current_frame >= len(self.idle_frames):
                 self.current_frame = 0
 
-    def draw(self, screen, screen_w, screen_h):
+    def draw(self, screen, offset_x, offset_y):
         if self.is_moving:
             frame = self.run_frames[int(self.current_frame)]
         else:
@@ -78,7 +78,7 @@ class Player:
         screen.blit(
             frame,
             (
-                screen_w // 2 - PLAYER_SIZE // 2,
-                screen_h // 2 - PLAYER_SIZE // 2
+                self.world_x - offset_x,
+                self.world_y - offset_y
             )
         )
