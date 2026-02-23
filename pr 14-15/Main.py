@@ -4,6 +4,7 @@ from blocks import Platform
 from ui import Button
 from hud import HUD
 from inventory import Inventory
+from coin import Coin 
 
 WIN_WIDTH = 800
 WIN_HEIGHT = 640
@@ -15,28 +16,29 @@ STATE_MENU = "menu"
 STATE_GAME = "game"
 STATE_PAUSE = "pause"
 STATE_INVENTORY = "inventory"
+STATE_GAME_OVER = "game_over"
 
 
 level = [
     "                                                                          ",
     "                                                                          ",
     "                                                                          ",
-    "                                                                          ",
+    "                    C                                      C              ",
     "                  ----                                   -----            ",
     "                                       -----                              ",
     "                                                                          ",
     "                                ----           -----                      ",
     "       -----                                                              ",
     "                                                            -----         ",
-    "                                                                          ",
-    "              -----      -----                                            ",
+    "                C                                                         ",
+    "              -----      -----                         C                  ",
     "                                                     -----                ",
-    "                                                                          ",
+    "                                        C                                 ",
     "                                      -----                               ",
-    "                                                                          ",
+    "             C                                                            ",
     "      ---------------                                                     ",
     "                         -                                                ",
-    "                         -          ----                                  ",
+    "                         -          ----                         C        ",
     "--------------------------------------------------------------------------"
 ]
 
@@ -47,6 +49,7 @@ world_height = len(level) * PLATFORM_HEIGHT
 def build_world():
     entities = pygame.sprite.Group()
     platforms = []
+    coins = pygame.sprite.Group()
 
     hero = Player(200, 200)
     entities.add(hero)
@@ -55,14 +58,21 @@ def build_world():
     for row in level:
         x = 0
         for col in row:
+
             if col == "-":
                 pf = Platform(x, y)
                 entities.add(pf)
                 platforms.append(pf)
+
+            if col == "C":
+                coin = Coin(x, y)
+                entities.add(coin)
+                coins.add(coin)
+
             x += PLATFORM_WIDTH
         y += PLATFORM_HEIGHT
 
-    return hero, entities, platforms
+    return hero, entities, platforms, coins
 
 
 def main():
@@ -76,17 +86,22 @@ def main():
 
     state = STATE_MENU
 
-    hero, entities, platforms = build_world()
-
+    hero, entities, platforms, coins = build_world()
     hud = HUD()
     inventory = Inventory()
 
+    # MENU
     btn_play = Button(300, 250, 200, 60, "Грати")
     btn_exit = Button(300, 330, 200, 60, "Вийти")
 
+    # PAUSE
     btn_resume = Button(300, 250, 200, 60, "Продовжити")
     btn_menu = Button(300, 330, 200, 60, "В меню")
     btn_quit = Button(300, 410, 200, 60, "Вийти")
+
+    # GAME OVER
+    btn_restart = Button(300, 250, 200, 60, "Почати знову")
+    btn_menu_dead = Button(300, 330, 200, 60, "В меню")
 
     left = right = up = False
     camera_x = 0
@@ -105,7 +120,9 @@ def main():
                 if btn_play.handle_event(e):
                     state = STATE_GAME
                     hud.reset()
-                    hero, entities, platforms = build_world()
+                    hero, entities, platforms, coins = build_world()
+                    inventory.clear()
+                    left = right = up = False
 
                 if btn_exit.handle_event(e):
                     running = False
@@ -119,15 +136,6 @@ def main():
                     if e.key == pygame.K_i:
                         state = STATE_INVENTORY
                         inventory.open()
-
-                    if e.key == pygame.K_h:
-                        hud.hp = max(0, hud.hp - 10)
-
-                    if e.key == pygame.K_j:
-                        hud.hp = min(hud.hp_max, hud.hp + 10)
-
-                    if e.key == pygame.K_SPACE:
-                        hud.score += 1
 
                     if e.key == pygame.K_a:
                         left = True
@@ -148,10 +156,8 @@ def main():
             elif state == STATE_PAUSE:
                 if btn_resume.handle_event(e):
                     state = STATE_GAME
-
                 if btn_menu.handle_event(e):
                     state = STATE_MENU
-
                 if btn_quit.handle_event(e):
                     running = False
 
@@ -163,18 +169,39 @@ def main():
                     if e.key == pygame.K_i:
                         inventory.close()
 
+            # ---------------- GAME OVER ----------------
+            elif state == STATE_GAME_OVER:
+                if btn_restart.handle_event(e):
+                    state = STATE_GAME
+                    hud.reset()
+                    hero, entities, platforms, coins = build_world()
+                    inventory.clear()
+                    left = right = up = False
+
+                if btn_menu_dead.handle_event(e):
+                    state = STATE_MENU
+
         # -------- UPDATE --------
         if state == STATE_GAME:
+
             hero.update(left, right, up, platforms)
             hud.update(dt)
 
-            camera_x = hero.rect.x - WIN_WIDTH // 2
-            camera_y = hero.rect.y - WIN_HEIGHT // 2
+            # 💀 смерть якщо впав
+            if hero.rect.top > world_height:
+                state = STATE_GAME_OVER
+                left = right = up = False
 
-            if camera_y < 0:
-                camera_y = 0
-            if camera_y > world_height - WIN_HEIGHT:
-                camera_y = world_height - WIN_HEIGHT
+            # 🪙 збір монет
+            collected = pygame.sprite.spritecollide(hero, coins, True)
+            for coin in collected:
+                hud.score += 1
+                inventory.add_item("Coin", 1)
+                entities.remove(coin)
+
+            # 🎥 камера
+            camera_x = hero.rect.centerx - WIN_WIDTH // 2
+            camera_y = hero.rect.centery - WIN_HEIGHT // 2
 
         if state == STATE_INVENTORY:
             inventory.update(dt)
@@ -207,6 +234,14 @@ def main():
 
         if state == STATE_INVENTORY:
             inventory.draw(screen)
+
+        if state == STATE_GAME_OVER:
+            overlay = pygame.Surface((WIN_WIDTH, WIN_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 200))
+            screen.blit(overlay, (0, 0))
+
+            btn_restart.draw(screen)
+            btn_menu_dead.draw(screen)
 
         pygame.display.flip()
 
